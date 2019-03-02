@@ -1,0 +1,12 @@
+alias vi=vim
+
+export EDITOR=vim
+
+source @fzf_src@/shell/key-bindings.bash
+export FZF_TMUX=0
+
+export ERL_AFLAGS="-kernel shell_history enabled"
+
+export GOPATH="/home/vagrant/go"
+export PATH="$GOPATH/bin:/home/vagrant/.nix-profile/bin:$PATH"
+
