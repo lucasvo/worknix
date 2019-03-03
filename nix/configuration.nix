@@ -22,8 +22,9 @@
   ];
 
   users.users.vagrant = {
-     isNormalUser = true;
-     extraGroups = ["docker" "wheel"];
+    shell = pkgs.zsh;
+    isNormalUser = true;
+    extraGroups = ["docker" "wheel"];
   };
    
   home-manager.users.vagrant = {
@@ -40,11 +41,12 @@
       theme = "nebirhos";
       plugins = [
         "tig"
-        #"tmux"
+        "tmux"
         "go"
         "dep"
         "git-extras"
         "git"
+        "ssh-agent"
       ];
     };
       
