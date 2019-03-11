@@ -22,7 +22,7 @@ Vagrant.configure("2") do |config|
   config.vm.hostname = "worknix"
   config.vm.network "private_network", ip: "172.16.16.16"
   config.vm.synced_folder ".", "/worknix"
-  config.vm.synced_folder "../work_shared", "/work_shared"
+  config.vm.synced_folder "~/work_shared", "/work_shared"
  
 
   config.vm.provision :nixos, include: true, run: 'always', trace: true, verbose: true, inline: %{

@@ -34,20 +34,29 @@
     ];  
     programs.zsh = {
       enable = true;
-      shellAliases = { "vi" = "vim"; };
-    };
-    programs.zsh.oh-my-zsh = {
-      enable = true;
-      theme = "nebirhos";
-      plugins = [
-        "tig"
-        "tmux"
-        "go"
-        "dep"
-        "git-extras"
-        "git"
-        "ssh-agent"
-      ];
+      shellAliases = { 
+        "vi" = "vim"; 
+        # "ssh" = "[[ `ssh-add -l` == \"The agent has no identities.\" ]] && ssh-add; ssh";
+      };
+      
+      oh-my-zsh = {
+        enable = true;
+        theme = "nebirhos";
+        plugins = [
+          "tig"
+          "tmux"
+          "go"
+          "dep"
+          "git-extras"
+          "git"
+          # "ssh-agent"
+        ];
+      };
+      # identities need to be empty at first. Otherwise vagrant will fail ssh-ing into the machine because it asks for the 
+      # passphrase at login
+      initExtra = ''
+zstyle :omz:plugins:ssh-agent identities 
+'';
     };
       
     programs.tmux.enable = true;
@@ -70,7 +79,8 @@
   environment.systemPackages = with pkgs; [
     autojump
     ack
-    
+    bash 
+ 
     nix-prefetch-scripts
     nixpkgs-lint
     nox
@@ -117,7 +127,9 @@
 
     home-manager
     git
-    vim
+    my_vim
+    tmux
+    dep
   ];	
 }
 
