@@ -31,11 +31,11 @@
     home.packages = with pkgs; [
       my_vim
       tmux
-    ];  
+    ];
     programs.zsh = {
       enable = true;
-      shellAliases = { 
-        "vi" = "vim"; 
+      shellAliases = {
+        "vi" = "vim";
         # "ssh" = "[[ `ssh-add -l` == \"The agent has no identities.\" ]] && ssh-add; ssh";
       };
       
@@ -49,14 +49,14 @@
           "dep"
           "git-extras"
           "git"
-          # "ssh-agent"
+          "ssh-agent"
         ];
       };
       # identities need to be empty at first. Otherwise vagrant will fail ssh-ing into the machine because it asks for the 
       # passphrase at login
-      initExtra = ''
-zstyle :omz:plugins:ssh-agent identities 
-'';
+#      initExtra = ''
+#zstyle :omz:plugins:ssh-agent identities
+#'';
     };
       
     programs.tmux.enable = true;
@@ -79,7 +79,7 @@ zstyle :omz:plugins:ssh-agent identities
   environment.systemPackages = with pkgs; [
     autojump
     ack
-    bash 
+    bash
  
     nix-prefetch-scripts
     nixpkgs-lint
