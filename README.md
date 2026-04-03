@@ -1,28 +1,57 @@
 # worknix
-My work environment the way I like it, encapsulated in a vagrant vm because OSX is only fun 
-for GUIs. All of it is configured with nix just because.
+My work environment the way I like it, configured with nix and home-manager. Targets macOS (aarch64-darwin).
 
-## vagrant
-Vagrant is using a nix image and by default uses the configuration in nix/configuration.nix 
-when you run `vagrant provision`. There's also some code in there that copies the ssh private 
-key from the host into the vm so I don't need to add it to github and other places everytime 
-a new one gets created.
+## Setup
 
-### Building vagrant box
-The last publicly available build of nixbos is too old, so this requires you to build your own 
-or trust a random stranger who published theirs.
+### Prerequisites
+- [Nix](https://install.determinate.systems/nix) with flakes enabled
+- [NVM](https://github.com/nvm-sh/nvm) (managed outside nix, sourced in zsh)
+- [Foundry](https://getfoundry.sh/) via `foundryup` (managed outside nix)
 
-https://github.com/nix-community/nixbox
+### First install
+```bash
+nix run home-manager/master -- switch --flake ~/worknix#lucasvo -b backup
+```
 
-## home-manager
-It's configured to use home-manager. The home config is in `nix/configuration.nix` and automatically 
-loaded when logging in. 
+### Updating after changes
+```bash
+home-manager switch --flake ~/worknix#lucasvo
+```
 
-## Configuring iTerm
-There's a script called `vagrant_shell.sh` in the root of this folder. I've configured my iTerm 
-with a custom profile called vagrant that opens up an ssh session in the new shell. 
+## What's managed
+
+### CLI tools
+ripgrep, fd, jq, curl, htop, fzf, eza, powershell, cargo, rustc
+
+### Programs
+- **git** — LFS, default branch `main`
+- **neovim** — modern lua config with treesitter, telescope, LSP, nvim-cmp, conform, fugitive, gitsigns, oil, zen-mode
+- **zsh** — oh-my-zsh (robbyrussell theme), autosuggestions, syntax highlighting, fzf integration, nix-shell indicator
+- **tmux** — 256color terminal
+
+### Shell aliases
+| Alias | Command |
+|-------|---------|
+| `o` | `open` |
+| `ls` | `eza` |
+| `ll` | `eza -la` |
+| `lt` | `eza --tree` |
+
+### PATH additions
+- `~/.local/bin`
+- `~/.foundry/bin`
+- NVM-managed Node (via `~/.nvm/nvm.sh`)
+
+## Structure
+```
+flake.nix          # Nix flake (nixpkgs + home-manager inputs)
+home.nix           # Home-manager configuration
+dotfiles/
+  neovim.lua       # Neovim lua config
+  robbyrussell-nix.zsh-theme  # Custom zsh theme with nix-shell indicator
+```
 
 ## Inspirations
-https://github.com/nocoolnametom/nix-configs
-https://github.com/yrashk/nix-home
-https://github.com/bobvanderlinden/nix-home/
+- https://github.com/nocoolnametom/nix-configs
+- https://github.com/yrashk/nix-home
+- https://github.com/bobvanderlinden/nix-home/
