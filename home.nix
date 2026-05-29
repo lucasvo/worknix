@@ -41,6 +41,7 @@
       user.name = "lucasvo";
       user.email = "l@lucasvo.com";
       init.defaultBranch = "main";
+      core.pager = "less -FX";
     };
   };
 
@@ -112,6 +113,10 @@
       export NVM_DIR="$HOME/.nvm"
       [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
       [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"
+
+      # Google Cloud SDK (adds gcloud bin incl. gke-gcloud-auth-plugin to PATH)
+      [ -f "/opt/homebrew/share/google-cloud-sdk/path.zsh.inc" ] && \. "/opt/homebrew/share/google-cloud-sdk/path.zsh.inc"
+      [ -f "/opt/homebrew/share/google-cloud-sdk/completion.zsh.inc" ] && \. "/opt/homebrew/share/google-cloud-sdk/completion.zsh.inc"
     '';
     plugins = [
       {

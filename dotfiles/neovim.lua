@@ -125,47 +125,40 @@ vim.keymap.set("n", "<Leader>fb", builtin.buffers)
 vim.keymap.set("n", "<Leader>fh", builtin.help_tags)
 vim.keymap.set("n", "<Leader>a", builtin.grep_string)
 
--- Treesitter
-require("nvim-treesitter.configs").setup({
-  highlight = { enable = true },
-  indent = { enable = true },
-  incremental_selection = {
-    enable = true,
-    keymaps = {
-      init_selection = "<C-space>",
-      node_incremental = "<C-space>",
-      scope_incremental = false,
-      node_decremental = "<bs>",
-    },
-  },
-})
+-- Treesitter (grammars installed via nix, just enable features)
+vim.treesitter.start = vim.treesitter.start or function() end
+vim.opt.foldmethod = "expr"
+vim.opt.foldexpr = "v:lua.vim.treesitter.foldexpr()"
 
--- LSP
-local lspconfig = require("lspconfig")
+-- LSP (nvim 0.11+ native API)
 local capabilities = require("cmp_nvim_lsp").default_capabilities()
-
-local on_attach = function(_, bufnr)
-  local map = function(keys, func, desc)
-    vim.keymap.set("n", keys, func, { buffer = bufnr, desc = desc })
-  end
-  map("gd", builtin.lsp_definitions, "Go to definition")
-  map("gr", builtin.lsp_references, "References")
-  map("gi", builtin.lsp_implementations, "Implementations")
-  map("K", vim.lsp.buf.hover, "Hover")
-  map("<Leader>rn", vim.lsp.buf.rename, "Rename")
-  map("<Leader>ca", vim.lsp.buf.code_action, "Code action")
-  map("<Leader>D", builtin.lsp_type_definitions, "Type definition")
-  map("[d", vim.diagnostic.goto_prev, "Previous diagnostic")
-  map("]d", vim.diagnostic.goto_next, "Next diagnostic")
-end
 
 local servers = { "lua_ls", "rust_analyzer", "ts_ls", "pyright", "nil_ls" }
 for _, server in ipairs(servers) do
-  lspconfig[server].setup({
-    on_attach = on_attach,
+  vim.lsp.config(server, {
     capabilities = capabilities,
   })
 end
+vim.lsp.enable(servers)
+
+-- LSP keymaps (on attach)
+vim.api.nvim_create_autocmd("LspAttach", {
+  callback = function(args)
+    local bufnr = args.buf
+    local map = function(keys, func, desc)
+      vim.keymap.set("n", keys, func, { buffer = bufnr, desc = desc })
+    end
+    map("gd", builtin.lsp_definitions, "Go to definition")
+    map("gr", builtin.lsp_references, "References")
+    map("gi", builtin.lsp_implementations, "Implementations")
+    map("K", vim.lsp.buf.hover, "Hover")
+    map("<Leader>rn", vim.lsp.buf.rename, "Rename")
+    map("<Leader>ca", vim.lsp.buf.code_action, "Code action")
+    map("<Leader>D", builtin.lsp_type_definitions, "Type definition")
+    map("[d", vim.diagnostic.goto_prev, "Previous diagnostic")
+    map("]d", vim.diagnostic.goto_next, "Next diagnostic")
+  end,
+})
 
 -- nvim-cmp (completion)
 local cmp = require("cmp")
