@@ -117,6 +117,34 @@
       # Google Cloud SDK (adds gcloud bin incl. gke-gcloud-auth-plugin to PATH)
       [ -f "/opt/homebrew/share/google-cloud-sdk/path.zsh.inc" ] && \. "/opt/homebrew/share/google-cloud-sdk/path.zsh.inc"
       [ -f "/opt/homebrew/share/google-cloud-sdk/completion.zsh.inc" ] && \. "/opt/homebrew/share/google-cloud-sdk/completion.zsh.inc"
+
+      # Prod-admin (PAM-elevated adm.* work): isolated gcloud/kubectl config
+      # scoped to a subshell in the CURRENT tab — never touches the normal
+      # lucasvo@tare.io session state, and `exit` returns you to the tab
+      # exactly as it was before.
+      prod-admin() {
+        (
+          export CLOUDSDK_CONFIG="$HOME/adm-session/gcloud"
+          export KUBECONFIG="$HOME/adm-session/kubeconfig"
+          mkdir -p "$CLOUDSDK_CONFIG"
+
+          printf '\033]0;PROD ADMIN — adm.* session\007'   # tab title
+          printf '\033]11;#330000\007'                      # dark red background
+          # Reset title + background no matter how this subshell exits
+          # (exit, Ctrl-D, Ctrl-C, killed, etc).
+          trap 'printf "\033]0;\007"; printf "\033]111\007"' EXIT
+
+          export PROMPT="%F{red}%B[ADM PROD]%b%f $PROMPT"
+
+          print -P "%F{red}%B>>> Isolated prod-admin session (adm.* identity)%b%f"
+          print -P "%F{red}>>> CLOUDSDK_CONFIG=$CLOUDSDK_CONFIG%f"
+          print -P "%F{red}>>> KUBECONFIG=$KUBECONFIG%f"
+          print -P "%F{red}>>> Run 'gcloud auth login' to sign in as your adm.* account.%f"
+          print -P "%F{red}>>> Type 'exit' to leave this session and restore the background.%f"
+
+          zsh
+        )
+      }
     '';
     plugins = [
       {
