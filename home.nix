@@ -19,6 +19,8 @@
     eza
     cargo
     rustc
+    k9s
+    databricks-cli
   ];
 
   home.sessionPath = [
@@ -43,6 +45,11 @@
       init.defaultBranch = "main";
       core.pager = "less -FX";
     };
+  };
+
+  programs.direnv = {
+    enable = true;
+    nix-direnv.enable = true;
   };
 
   programs.neovim = {
@@ -109,6 +116,10 @@
       export ZSH_CUSTOM=$HOME/.config/oh-my-zsh
       export FZF_BASE=${pkgs.fzf}/share/fzf/
 
+      # Hide the "|SPARSE" suffix gitfast's __git_ps1 appends for
+      # sparse-checkout repos (e.g. tare-website) — not useful noise here.
+      export GIT_PS1_OMITSPARSESTATE=1
+
       # NVM
       export NVM_DIR="$HOME/.nvm"
       [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
@@ -122,6 +133,12 @@
       # scoped to a subshell in the CURRENT tab — never touches the normal
       # lucasvo@tare.io session state, and `exit` returns you to the tab
       # exactly as it was before.
+      #
+      # direnv's zsh hook (and oh-my-zsh's theme) rebuild $PROMPT on every
+      # precmd, which silently erases a one-shot `export PROMPT=...` after
+      # the first command. Re-asserting the red prefix from our own
+      # precmd_functions entry means it always wins, regardless of hook
+      # ordering, in repos like tare-infra that use direnv.
       prod-admin() {
         (
           export CLOUDSDK_CONFIG="$HOME/adm-session/gcloud"
@@ -130,11 +147,18 @@
 
           printf '\033]0;PROD ADMIN — adm.* session\007'   # tab title
           printf '\033]11;#330000\007'                      # dark red background
-          # Reset title + background no matter how this subshell exits
-          # (exit, Ctrl-D, Ctrl-C, killed, etc).
-          trap 'printf "\033]0;\007"; printf "\033]111\007"' EXIT
 
-          export PROMPT="%F{red}%B[ADM PROD]%b%f $PROMPT"
+          _prod_admin_prompt_guard() {
+            case "$PROMPT" in
+              "%F{red}%B[ADM PROD]%b%f "*) ;;
+              *) PROMPT="%F{red}%B[ADM PROD]%b%f $PROMPT" ;;
+            esac
+          }
+          precmd_functions+=(_prod_admin_prompt_guard)
+
+          # Reset title, background, and prompt guard no matter how this
+          # subshell exits (exit, Ctrl-D, Ctrl-C, killed, etc).
+          trap 'printf "\033]0;\007"; printf "\033]111\007"; precmd_functions=(''${precmd_functions:#_prod_admin_prompt_guard})' EXIT
 
           print -P "%F{red}%B>>> Isolated prod-admin session (adm.* identity)%b%f"
           print -P "%F{red}>>> CLOUDSDK_CONFIG=$CLOUDSDK_CONFIG%f"
