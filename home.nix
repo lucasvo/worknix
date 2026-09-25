@@ -112,6 +112,15 @@
       ll = "eza -la";
       lt = "eza --tree";
     };
+    # macOS updates overwrite /etc/zshrc and drop the Nix hook that puts
+    # ~/.nix-profile/bin on PATH. Without it fzf, eza, nix, home-manager are
+    # all "command not found". Source the hook ourselves from .zshenv so the
+    # shell keeps working regardless of what Apple does to /etc.
+    envExtra = ''
+      if [ -e /nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh ]; then
+        . /nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh
+      fi
+    '';
     initContent = ''
       export ZSH_CUSTOM=$HOME/.config/oh-my-zsh
       export FZF_BASE=${pkgs.fzf}/share/fzf/
