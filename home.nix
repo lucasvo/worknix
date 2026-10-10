@@ -1,5 +1,51 @@
 { config, pkgs, ... }:
 
+let
+  # `whisper <audio> [whisper-cli flags...]` — transcribe any audio/video
+  # file with whisper.cpp using the large-v3-turbo model. Converts the input
+  # to 16 kHz mono WAV via ffmpeg (so m4a/mp4/ogg voice memos just work) and
+  # downloads the model into ~/.local/share/whisper-cpp on first use.
+  whisperModel = "large-v3-turbo";
+  whisper = pkgs.writeShellScriptBin "whisper" ''
+    set -euo pipefail
+
+    model_dir="''${WHISPER_MODEL_DIR:-$HOME/.local/share/whisper-cpp}"
+    model_name="''${WHISPER_MODEL:-${whisperModel}}"
+    model="$model_dir/ggml-$model_name.bin"
+
+    if [ $# -lt 1 ] || [ "$1" = "-h" ] || [ "$1" = "--help" ]; then
+      cat <<USAGE
+    usage: whisper <audio-file> [whisper-cli options...]
+
+    Transcribes with whisper.cpp (model: $model_name, Metal accelerated).
+    Any extra args are passed to whisper-cli, e.g.:
+      whisper memo.m4a                  # print transcript
+      whisper memo.m4a -otxt -of memo   # also write memo.txt
+      whisper memo.m4a -osrt -l de      # German subtitles
+      whisper memo.m4a -l auto          # auto-detect language
+
+    env: WHISPER_MODEL=$model_name  WHISPER_MODEL_DIR=$model_dir
+    USAGE
+      exit 0
+    fi
+
+    input="$1"; shift
+    [ -f "$input" ] || { echo "whisper: no such file: $input" >&2; exit 1; }
+
+    if [ ! -f "$model" ]; then
+      echo "whisper: downloading ggml-$model_name.bin to $model_dir ..." >&2
+      mkdir -p "$model_dir"
+      ( cd "$model_dir" && ${pkgs.whisper-cpp}/bin/whisper-cpp-download-ggml-model "$model_name" >&2 )
+    fi
+
+    tmp="$(mktemp -d)"
+    trap 'rm -rf "$tmp"' EXIT
+    ${pkgs.ffmpeg}/bin/ffmpeg -nostdin -loglevel error -y \
+      -i "$input" -ar 16000 -ac 1 -c:a pcm_s16le "$tmp/audio.wav"
+
+    exec ${pkgs.whisper-cpp}/bin/whisper-cli -m "$model" -f "$tmp/audio.wav" "$@"
+  '';
+in
 {
   home.username = "lucasvo";
   home.homeDirectory = "/Users/lucasvo";
@@ -21,6 +67,11 @@
     rustc
     k9s
     databricks-cli
+
+    # Local speech-to-text: whisper.cpp (Metal + CoreML on Apple Silicon)
+    # ships whisper-cli, whisper-server, whisper-stream, etc.
+    whisper-cpp
+    whisper
   ];
 
   home.sessionPath = [
